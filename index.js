@@ -16,15 +16,15 @@ const NT_CONST_SIGNATURE                = 0x50450000;
 //SECTION DEFINTION
 const SECTION_OFFSET                    = 0x1D0;
 const SECTION_OFFSET_NAME               = 0x0;
-const SECTION_OFFSET_VIRTUAL_SIZE       = 0x0;
-const SECTION_OFFSET_VIRTUAL_ADDRESS    = 0x0;
-const SECTION_RAW_SIZE                  = 0x0;
-const SECTION_RAW_ADDRESS               = 0x0;
-const SECTION_RELOC_ADDRESS             = 0x0;
-const SECTION_LINENUMBERS               = 0x0;
-const SECTION_RELOCATION_NUMBERS        = 0x0;
-const SECTION_LINENUMBERS_NUMBER        = 0x0;
-const SECTION_CHARACERISTICS            = 0x0;
+const SECTION_OFFSET_VIRTUAL_SIZE       = 0x8;
+const SECTION_OFFSET_VIRTUAL_ADDRESS    = 0xC;
+const SECTION_OFFSET_RAW_SIZE                  = 0x10;
+const SECTION_OFFSET_RAW_ADDRESS               = 0x14;
+const SECTION_OFFSET_RELOC_ADDRESS             = 0x18;
+const SECTION_OFFSET_LINENUMBERS               = 0x1C;
+const SECTION_OFFSET_RELOCATION_NUMBERS        = 0x20;
+const SECTION_OFFSET_LINENUMBERS_NUMBER        = 0x22;
+const SECTION_OFFSET_CHARACERISTICS            = 0x24;
 
 exports.removePDB = function(path) {
     var binary;
@@ -37,7 +37,7 @@ exports.removePDB = function(path) {
 
     if(dos.SIGNATURE != DOS_CONST_SIGNATURE){
         throw new Error('invalid dos header');
-    } 
+    }
 
     nt = readNTHeader(binary, dos);
 
@@ -45,13 +45,18 @@ exports.removePDB = function(path) {
         throw new Error('invalid nt header');
     }
 
-    console.log(nt.NUMBER_OF_SECTIONS);
-    console.log(nt.DEBUG_DIRECTORY);
+    var section = getSection(binary, nt, '.rsrc\0\0\0');
 
-    sections = readSectionHeader(binary, nt);
-    console.log(sections.test);
-
-    getSection(binary, nt, '.text\0\0\0');
+    console.log(section.NAME);
+    console.log(section.VIRTUAL_SIZE);
+    console.log(section.VIRTUAL_ADDRESS);
+    console.log(section.RAW_SIZE);
+    console.log(section.RAW_ADDRESS);
+    console.log(section.RELOC_ADDRESS);
+    console.log(section.LINENUMBERS);
+    console.log(section.RELOCATIONS_NUMBER);
+    console.log(section.LINENUMBERS_NUMBER);
+    console.log(section.CHARACTERISTICS);
 }
 
 function readDOSHeader(binary) {
@@ -71,18 +76,23 @@ function readNTHeader(binary, dos) {
     }
 }
 
-function readSectionHeader(binary, nt) {
-    return {
-        test: binary.toString('ascii', SECTION_OFFSET, SECTION_OFFSET + 8)
-    }
-}
-
 function getSection(binary, nt, name) {
-    var sectionName = binary.toString('ascii', SECTION_OFFSET, SECTION_OFFSET + 8);
+    for(var i=0;i<nt.NUMBER_OF_SECTIONS;i++) {
+        var sectionName = binary.toString('ascii', SECTION_OFFSET + 0x28*i, SECTION_OFFSET + 0x28*i + 8);
 
-    if(sectionName.trim() === name) {
-        return {
-
+        if(sectionName === name) {
+            return {
+                NAME:                   sectionName,
+                VIRTUAL_SIZE:           binary.readUInt32LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_VIRTUAL_SIZE),
+                VIRTUAL_ADDRESS:        binary.readUInt32LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_VIRTUAL_ADDRESS),
+                RAW_SIZE:               binary.readUInt32LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_RAW_SIZE),
+                RAW_ADDRESS:            binary.readUInt32LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_RAW_ADDRESS),
+                RELOC_ADDRESS:          binary.readUInt32LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_RELOC_ADDRESS),
+                LINENUMBERS:            binary.readUInt32LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_LINENUMBERS),
+                RELOCATIONS_NUMBER:     binary.readUInt16LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_RELOCATION_NUMBERS),
+                LINENUMBERS_NUMBER:     binary.readUInt16LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_LINENUMBERS_NUMBER),
+                CHARACTERISTICS:        binary.readUInt32LE(SECTION_OFFSET + 0x28*i + SECTION_OFFSET_CHARACERISTICS)
+            }
         }
     }
 }
