@@ -48,9 +48,13 @@ exports.removePDB = function(path) {
 
     var sections = getSections(binary, nt);
 
-    sections.forEach(section => {
-        console.log(JSON.stringify(section));
+    //find section of DEBUG_DIRECTORY to get file offset
+    var section = getSections(binary, nt).find((element) => {
+        console.log(element);
+        return (nt.DEBUG_DIRECTORY >= element.VIRTUAL_ADDRESS) && (nt.DEBUG_DIRECTORY <= (element.VIRTUAL_ADDRESS + element.VIRTUAL_SIZE));
     });
+
+    var fileOffset = (nt.DEBUG_DIRECTORY - section.VIRTUAL_ADDRESS) + section.RAW_ADDRESS;
 }
 
 function readDOSHeader(binary) {
