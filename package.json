@@ -1,6 +1,6 @@
 {
   "name": "pdbkill",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "removes pdb information from a portable executable",
   "main": "index.js",
   "scripts": {
